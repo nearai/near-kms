@@ -1,8 +1,8 @@
-# NEAR dstack KMS
+# NEAR KMS
 
-The NEAR dstack KMS (Key Management System) is a secure smart contract system for managing cryptographic keys using Trusted Execution Environment (TEE) and Multi-Party Computation (MPC) technologies on the NEAR Protocol. This project provides secure key derivation, attestation verification, and access control mechanisms for TEE-based applications.
+The NEAR KMS (Key Management System) is a secure smart contract system for managing cryptographic keys using Trusted Execution Environment (TEE) and Multi-Party Computation (MPC) technologies on the NEAR Protocol. This project provides secure key derivation, attestation verification, and access control mechanisms for TEE-based applications.
 
-The system enables secure key management for dstack applications running in TEE environments in a decentralized approach, ensuring that only verified and approved TEE instances can access and derive cryptographic keys through integration with the NEAR MPC (Multi-Party Computation) network.
+The system enables secure key management for CVMs running in TEE environments in a decentralized approach, ensuring that only verified and approved TEE instances can access and derive cryptographic keys through integration with the NEAR MPC (Multi-Party Computation) network.
 
 ## Overview
 
@@ -31,7 +31,7 @@ The system consists of two main smart contracts:
 ## Project Structure
 
 ```
-near-dstack-kms/
+near-kms/
 ├── contracts/              # Smart contracts
 │   ├── kms/                # KMS contract
 │   │   ├── src/            # Source code
@@ -103,10 +103,13 @@ The test suite includes:
 - KMS contract initialization and configuration
 - Compose hash management (add/remove)
 - OS image hash management
+- Aggregated MR management
+- Device ID management
 - Gateway app ID configuration
 - Root key request functionality
+- App contract registration via factory method
 - App contract initialization and management
-- Device ID management
+- Device ID management for apps
 - Access control verification
 
 ### 3. Deploy the Contracts
@@ -152,8 +155,11 @@ cd scripts/mainnet
 - **Attestation Verification**: Verify TEE quotes, collateral, and TCB (Trusted Computing Base) information
 - **Compose Hash Management**: Manage allowed Docker compose hashes for KMS operations
 - **OS Image Management**: Control allowed OS image hashes
+- **Aggregated MR Management**: Manage allowed aggregated measurement registers (MRs) for KMS
 - **Device ID Management**: Manage allowed device IDs for KMS access
-- **App Registration**: Register and manage app contracts
+- **App Registration**: Register and manage app contracts via factory method
+- **KMS Info Management**: Store and manage KMS root keys, quotes, and event logs
+- **Gateway App Configuration**: Set gateway app ID for routing
 - **Access Control**: Role-based access control (Owner, DAO, PauseManager, UnpauseManager)
 - **Pausable**: Ability to pause contract operations for security
 - **Upgradable**: Support for contract upgrades with proper access control
@@ -211,10 +217,12 @@ near call <app-contract-id> add_compose_hash \
 
 ### Register App Contract
 
+Register and deploy an app contract via the KMS factory method:
+
 ```bash
 near call <kms-contract-id> register_app \
   --args '{
-    "app_account_id": "<app-account-id>",
+    "app_id": "<app-id>",
     "owner_id": "<owner-account-id>",
     "disable_upgrades": false,
     "allow_any_device": false,
@@ -225,14 +233,43 @@ near call <kms-contract-id> register_app \
   --accountId <owner-account-id>
 ```
 
+This will create a subaccount `<app-id>.<kms-contract-id>`, deploy the app contract, initialize it, and register it with the KMS.
+
+### Add OS Image Hash to KMS
+
+```bash
+near call <kms-contract-id> add_os_image_hash \
+  --args '{"os_image_hash": "<os-image-hash>"}' \
+  --accountId <owner-account-id>
+```
+
+### Add KMS Aggregated MR
+
+```bash
+near call <kms-contract-id> add_kms_aggregated_mr \
+  --args '{"mr_aggregated": "<mr-aggregated>"}' \
+  --accountId <owner-account-id>
+```
+
+### Add KMS Device ID
+
+```bash
+near call <kms-contract-id> add_kms_device \
+  --args '{"device_id": "<device-id>"}' \
+  --accountId <owner-account-id>
+```
+
 ## Security Considerations
 
 - **TEE Attestation**: All key derivation requests require valid TEE attestation (quote, collateral, TCB info)
 - **Compose Hash Verification**: Only approved compose hashes can be used for key operations
+- **OS Image Verification**: Only approved OS image hashes are allowed
+- **Aggregated MR Verification**: Only approved aggregated measurement registers (MRs) are allowed for KMS
+- **Device ID Validation**: Optional device ID allowlist provides additional security layer for both KMS and App contracts
 - **Access Control**: Role-based access control ensures only authorized accounts can perform administrative operations
 - **Pausable Operations**: Critical operations can be paused for security incidents
 - **Upgrade Control**: Contract upgrades are controlled and can be permanently disabled
-- **Device ID Validation**: Optional device ID allowlist provides additional security layer
+- **Factory Pattern**: App contracts are deployed via KMS factory method, ensuring proper registration and initialization
 
 ## Development
 
@@ -267,24 +304,70 @@ make lint
 
 #### KMS Contract Methods
 
+**Initialization:**
 - `new(owner_id, mpc_contract_id, mpc_domain_id)` - Initialize contract
+
+**Key Management:**
 - `request_kms_root_key(quote_hex, collateral, tcb_info, worker_public_key)` - Request root key from MPC
+- `set_kms_info(info)` - Set KMS info (k256_pubkey, ca_pubkey, quote, eventlog)
+- `set_kms_quote(quote)` - Set KMS quote
+- `set_kms_eventlog(eventlog)` - Set KMS event log
+
+**Compose Hash Management:**
 - `add_kms_compose_hash(compose_hash)` - Add allowed compose hash
 - `remove_kms_compose_hash(compose_hash)` - Remove compose hash
+
+**OS Image Management:**
 - `add_os_image_hash(os_image_hash)` - Add allowed OS image hash
 - `remove_os_image_hash(os_image_hash)` - Remove OS image hash
+
+**Aggregated MR Management:**
+- `add_kms_aggregated_mr(mr_aggregated)` - Add allowed aggregated MR
+- `remove_kms_aggregated_mr(mr_aggregated)` - Remove aggregated MR
+
+**Device ID Management:**
+- `add_kms_device(device_id)` - Add allowed device ID
+- `remove_kms_device(device_id)` - Remove device ID
+
+**App Management:**
+- `register_app(app_id, owner_id, disable_upgrades, allow_any_device, initial_device_id, initial_compose_hash)` - Deploy and register app contract (factory method)
+
+**Configuration:**
 - `set_gateway_app_id(app_id)` - Set gateway app ID
-- `register_app(...)` - Deploy and register app contract
+
+**View Methods:**
+- `is_app_registered(app_id)` - Check if app is registered
+- `get_registered_apps(offset, limit)` - Get registered apps with pagination
+- `get_gateway_app_id()` - Get gateway app ID
+- `get_kms_info()` - Get KMS info
+- `get_allowed_os_images()` - Get all allowed OS image hashes
+- `get_kms_allowed_aggregated_mrs()` - Get all allowed aggregated MRs
+- `get_kms_allowed_device_ids()` - Get all allowed device IDs
+- `is_kms_allowed(boot_info)` - Check if KMS is allowed to boot with given boot info
+- `is_os_image_allowed(os_image_hash)` - Check if OS image hash is allowed
+- `is_kms_aggregated_mr_allowed(mr_aggregated)` - Check if aggregated MR is allowed
+- `is_kms_device_allowed(device_id)` - Check if device ID is allowed
+- `is_kms_compose_hash_allowed(compose_hash)` - Check if compose hash is allowed
+- `get_kms_allowed_compose_hashes()` - Get all allowed compose hashes
 
 #### App Contract Methods
 
+**Initialization:**
 - `new(owner_id, disable_upgrades, allow_any_device, initial_device_id, initial_compose_hash, kms_contract_id)` - Initialize contract
-- `is_app_allowed(boot_info)` - Check if app is allowed to boot
+
+**Validation:**
+- `is_app_allowed(boot_info)` - Check if app is allowed to boot (returns `(bool, String)`)
+
+**Compose Hash Management:**
 - `add_compose_hash(compose_hash)` - Add allowed compose hash
 - `remove_compose_hash(compose_hash)` - Remove compose hash
+
+**Device ID Management:**
 - `add_device(device_id)` - Add allowed device ID
 - `remove_device(device_id)` - Remove device ID
 - `set_allow_any_device(allow_any_device)` - Set allow-any-device flag
+
+**Upgrade Control:**
 - `disable_upgrades()` - Permanently disable upgrades
 
 ## Tools
@@ -297,20 +380,35 @@ make lint
 
 ### Key Derivation Flow
 
-1. TEE instance generates attestation quote
-2. KMS contract verifies quote, collateral, and TCB info
-3. KMS contract checks compose hash is in allowlist
-4. KMS contract requests key derivation from NEAR MPC network
-5. MPC network derives key using BLS12-381 cryptography
-6. Key is returned to the TEE instance
+1. TEE instance generates attestation quote, collateral, and TCB info
+2. TEE instance calls `request_kms_root_key` with:
+   - `quote_hex`: Hex-encoded quote bytes
+   - `collateral`: JSON string containing collateral data
+   - `tcb_info`: JSON string containing TCB info
+   - `worker_public_key`: BLS12-381 public key for key derivation
+3. KMS contract verifies attestation (quote, collateral, TCB info)
+4. KMS contract checks compose hash is in allowlist
+5. KMS contract requests key derivation from NEAR MPC network using CKD (Child Key Derivation)
+6. MPC network derives key using BLS12-381 cryptography with derivation path `"kms-root-key"`
+7. Key derivation result is returned via callback to `set_kms_info`
+8. KMS info (k256_pubkey, ca_pubkey, quote, eventlog) is stored in contract state
 
 ### App Validation Flow
 
-1. App provides boot information (compose hash, device ID, TCB status, etc.)
+1. App provides boot information (`AppBootInfo`) including:
+   - `app_id`: The app contract account ID
+   - `compose_hash`: Docker compose hash
+   - `instance_id`: Instance account ID
+   - `device_id`: Device identifier
+   - `mr_aggregated`: Aggregated measurement register
+   - `mr_system`: System measurement register
+   - `os_image_hash`: OS image hash
+   - `tcb_status`: TCB status (e.g., "UpToDate")
+   - `advisory_ids`: Security advisory IDs
 2. App contract validates compose hash is in allowlist
-3. App contract validates device ID (if not allow-any-device mode)
-4. App contract validates TCB status
-5. If all validations pass, app is allowed to boot
+3. App contract validates device ID (if `allow_any_device` is `false`)
+4. If all validations pass, app is allowed to boot (returns `(true, "")`)
+5. If validation fails, returns `(false, "error message")`
 
 ## License
 
