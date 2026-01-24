@@ -1,0 +1,33 @@
+name: Build
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  build-kms-contract:
+    name: Build KMS Contract
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Install cargo-near CLI
+        run: curl --proto '=https' --tlsv1.2 -LsSf https://github.com/near/cargo-near/releases/download/cargo-near-v0.14.2/cargo-near-installer.sh | sh
+      - name: Build
+        run: |
+          cd contracts/kms
+          cargo near build reproducible-wasm
+
+  build-app-contract:
+    name: Build App Contract
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Install cargo-near CLI
+        run: curl --proto '=https' --tlsv1.2 -LsSf https://github.com/near/cargo-near/releases/download/cargo-near-v0.14.2/cargo-near-installer.sh | sh
+      - name: Build
+        run: |
+          cd contracts/app
+          cargo near build reproducible-wasm

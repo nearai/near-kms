@@ -1,0 +1,78 @@
+[package]
+name = "near-dstack-kms"
+description = "Dstack KMS NEAR Contract"
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+# fields to configure build with WASM reproducibility, according to specs
+# in https://github.com/near/NEPs/blob/master/neps/nep-0330.md
+[package.metadata.near.reproducible_build]
+# docker image, descriptor of build environment
+image = "sourcescan/cargo-near:0.19.0-rust-1.86.0"
+# tag after colon above serves only descriptive purpose; image is identified by digest
+image_digest = "sha256:772638e343baeeea24e49062c7d424274f3441452cc06ce97fc4e5695b19fecc"
+# list of environment variables names, whose values, if set, will be used as external build parameters
+# in a reproducible manner
+# supported by `sourcescan/cargo-near:0.10.1-rust-1.82.0` image or later images
+passed_env = []
+# build command inside of docker container
+# if docker image from default gallery is used https://hub.docker.com/r/sourcescan/cargo-near/tags,
+# the command may be any combination of flags of `cargo-near`,
+# supported by respective version of binary inside the container besides `--no-locked` flag
+container_build_command = [
+    "cargo",
+    "near",
+    "build",
+    "non-reproducible-wasm",
+    "--locked",
+]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[dependencies]
+borsh = { version = "1", features = ["derive", "unstable__schema"] }
+dcap-qvl = { version = "0.3", default-features = false, features = ["contract", "borsh", "std"] }
+derive_more = { version = "2", features = [
+    "from",
+    "deref",
+    "into",
+    "as_ref",
+    "constructor",
+] }
+# Latest `master` as per 2025-09-02
+dstack-sdk-types = { features = ["borsh"], git = "https://github.com/Dstack-TEE/dstack.git", rev = "c9840bbd1562cab6763add2c6eba1ab16267e5cc" }
+hex = "0.4"
+k256 = "0.13"
+near-plugins = { git = "https://github.com/Near-One/near-plugins.git", tag = "v0.5.0" }
+near-sdk = "5.24.0"
+schemars = "0.8" # This version needs to be exactly the same as in `near_sdk::schemars`
+serde = { version = "1", features = ["derive"] }
+serde_with = "3"
+sha2 = "0.10"
+sha3 = "0.10"
+thiserror = "2"
+tracing = "0.1"
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+getrandom = { version = "0.2.16", features = ["custom"] }
+
+[dev-dependencies]
+near-gas = "0.3.3"
+near-sdk = { version = "5.24.0", features = ["unit-testing"] }
+near-workspaces = { version = "0.22.1", features = ["unstable"] }
+rand = "0.9"
+tokio = "1"
+
+[features]
+abi = [
+    "borsh/unstable__schema",
+    "dcap-qvl/borsh_schema",
+    "dstack-sdk-types/borsh_schema",
+]
+test = []
+
+[lints]
+workspace = true
