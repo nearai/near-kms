@@ -99,7 +99,7 @@ async fn test_remove_kms_compose_hash() -> Result<(), Box<dyn std::error::Error>
 async fn test_request_kms_root_key() -> Result<(), Box<dyn std::error::Error>> {
     println!("Testing request KMS root key...");
     let sandbox = near_workspaces::sandbox().await?;
-    let owner = sandbox.root_account().unwrap();
+    let (owner, alice, _bob) = create_test_accounts(&sandbox).await?;
 
     let kms_contract = deploy_kms_contract(&sandbox, &owner).await?;
 
@@ -110,11 +110,11 @@ async fn test_request_kms_root_key() -> Result<(), Box<dyn std::error::Error>> {
     let allowed = is_kms_compose_hash_allowed(&kms_contract, COMPOSE_HASH).await?;
     assert!(allowed, "Compose hash should be allowed");
 
-    // Request root key with mock MPC contract
+    // Request root key with mock MPC contract using Alice's account
     // The mock MPC contract will return a response via callback
     let worker_public_key = "a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef123456";
     let result = request_kms_root_key(
-        &owner,
+        &alice,
         &kms_contract,
         QUOTE_HEX_ALICE,
         QUOTE_COLLATERAL_ALICE,

@@ -1,9 +1,13 @@
+use std::str::FromStr;
+
 use near_gas::NearGas;
 use near_sdk::serde_json::{self, json};
 use near_sdk::{AccountId, NearToken};
 use near_workspaces::{
     Account, Contract, Worker, network::Sandbox, result::ExecutionFinalResult, types::SecretKey,
 };
+
+use super::constants::{SECRET_KEY_ALICE, SECRET_KEY_BOB};
 
 pub const KMS_CONTRACT_WASM: &str = "../../target/near/near_dstack_kms/near_dstack_kms.wasm";
 pub const APP_CONTRACT_WASM: &str = "../../target/near/near_dstack_app/near_dstack_app.wasm";
@@ -38,6 +42,29 @@ pub async fn create_account_with_secret_key(
         .transact()
         .await?
         .result)
+}
+
+// Helper function to create test accounts (owner, alice, bob)
+pub async fn create_test_accounts(
+    sandbox: &Worker<Sandbox>,
+) -> Result<(Account, Account, Account), Box<dyn std::error::Error>> {
+    let owner = create_account(sandbox, "owner", 10).await?;
+    let alice = create_account_with_secret_key(
+        sandbox,
+        "alice",
+        10,
+        SecretKey::from_str(SECRET_KEY_ALICE).unwrap(),
+    )
+    .await?;
+    let bob = create_account_with_secret_key(
+        sandbox,
+        "bob",
+        10,
+        SecretKey::from_str(SECRET_KEY_BOB).unwrap(),
+    )
+    .await?;
+
+    Ok((owner, alice, bob))
 }
 
 // Helper function to print execution logs
