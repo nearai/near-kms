@@ -5,7 +5,6 @@ use common::constants::*;
 use common::utils::*;
 use near_sdk::NearToken;
 use near_sdk::serde_json::json;
-use near_workspaces::{Account, Worker, network::Sandbox};
 
 #[tokio::test]
 async fn test_app_contract_initialization() -> Result<(), Box<dyn std::error::Error>> {

@@ -7,7 +7,7 @@ use near_plugins::{
     access_control_any, pause,
 };
 use near_sdk::{
-    AccountId, Gas, NearToken, PanicOnDefault, Promise, assert_one_yocto,
+    AccountId, Gas, NearToken, PanicOnDefault, PromiseOrValue, assert_one_yocto,
     borsh::BorshDeserialize,
     env::{self, block_timestamp_ms},
     log, near, require,
@@ -23,7 +23,7 @@ use crate::attestation::{
     report_data::ReportData,
 };
 use crate::events::Event;
-use crate::ext::{Bls12381G1PublicKey, CKDRequestArgs, DomainId, ext_mpc};
+use crate::ext::{Bls12381G1PublicKey, CKDRequestArgs, CKDResponse, DomainId, ext_mpc};
 use crate::types::{Prefix, TimestampMs};
 
 mod app;
@@ -157,7 +157,7 @@ impl Contract {
         collateral: String,
         tcb_info: String,
         worker_public_key: Bls12381G1PublicKey,
-    ) -> Promise {
+    ) -> PromiseOrValue<CKDResponse> {
         assert_one_yocto();
 
         // Parse the attestation components
@@ -219,6 +219,7 @@ impl Contract {
             .with_static_gas(GAS_MPC_CKD_REQUEST)
             .with_attached_deposit(NearToken::from_yoctonear(1))
             .request_app_private_key(request)
+            .into()
     }
 
     /// Add a compose hash to the allowed list for KMS

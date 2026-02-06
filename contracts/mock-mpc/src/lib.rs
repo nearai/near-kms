@@ -1,6 +1,5 @@
 use near_sdk::{
-    BorshStorageKey, Gas, NearToken, PanicOnDefault, Promise, assert_one_yocto, env, log, near,
-    store::LookupMap,
+    BorshStorageKey, PanicOnDefault, PromiseOrValue, assert_one_yocto, log, near, store::LookupMap,
 };
 
 // Import types from the KMS contract's ext module
@@ -56,9 +55,12 @@ impl Contract {
 
     /// Mock implementation of request_app_private_key
     /// In a real MPC contract, this would perform confidential key derivation
-    /// For the mock, we return dummy BLS12-381 G1 public keys
+    /// For the mock, we return dummy BLS12-381 G1 public keys directly
     #[payable]
-    pub fn request_app_private_key(&mut self, request: CKDRequestArgs) -> Promise {
+    pub fn request_app_private_key(
+        &mut self,
+        request: CKDRequestArgs,
+    ) -> PromiseOrValue<CKDResponse> {
         assert_one_yocto();
 
         log!(
@@ -90,17 +92,9 @@ impl Contract {
 
         log!("Mock MPC: Stored response for request: {}", request_key);
 
-        // Return a promise that calls back to the caller
-        // The caller should have a callback method to receive the response
-        let caller = env::predecessor_account_id();
-
-        Promise::new(caller).function_call(
-            "on_ckd_response".to_string(),
-            near_sdk::serde_json::to_vec(&response)
-                .unwrap_or_else(|_| env::panic_str("Failed to serialize response")),
-            NearToken::from_yoctonear(0),
-            Gas::from_tgas(10),
-        )
+        // Return the value directly (no callback needed)
+        // This allows non-contract callers to receive the response synchronously
+        PromiseOrValue::Value(response)
     }
 
     /// View method to get a mock CKD response (for testing without promises)

@@ -1,4 +1,4 @@
-use near_sdk::{Promise, ext_contract, near};
+use near_sdk::{PromiseOrValue, ext_contract, near};
 
 // Simplified BLS12-381 G1 public key type (String format for JSON)
 #[near(serializers = [json])]
@@ -24,6 +24,6 @@ pub struct CKDResponse {
 #[ext_contract(ext_mpc)]
 trait ExtMPC {
     /// Request a confidential key derivation from the MPC network
-    /// Returns a Promise that will resolve to CKDResponse
-    fn request_app_private_key(&self, request: CKDRequestArgs) -> Promise;
+    /// Returns a PromiseOrValue that can be either a Promise or direct value
+    fn request_app_private_key(&self, request: CKDRequestArgs) -> PromiseOrValue<CKDResponse>;
 }
