@@ -3,7 +3,7 @@ set -e
 
 export NEAR_ENV=testnet
 export KMS_CONTRACT=kms-dev.testnet
-export ACCOUNT=alice.testnet
+export ACCOUNT=kms-alice.testnet
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
