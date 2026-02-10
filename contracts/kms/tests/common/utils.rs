@@ -615,7 +615,7 @@ pub async fn disable_app_upgrades(
 // ============================================================================
 
 /// Convert a hex string (48 bytes = 96 hex chars) to BLS12-381 G1 public key format
-/// Format: bls12381g1:<base58_encoded_key>
+/// Format: bls12381g1:<`base58_encoded_key`>
 pub fn hex_to_bls12381g1_key(hex_str: &str) -> Result<String, Box<dyn std::error::Error>> {
     use bs58;
 
@@ -637,7 +637,7 @@ pub fn hex_to_bls12381g1_key(hex_str: &str) -> Result<String, Box<dyn std::error
     let base58_key = bs58::encode(&key_bytes).into_string();
 
     // Add prefix
-    Ok(format!("bls12381g1:{}", base58_key))
+    Ok(format!("bls12381g1:{base58_key}"))
 }
 
 // ============================================================================
