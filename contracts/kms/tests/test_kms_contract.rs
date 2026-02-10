@@ -135,7 +135,6 @@ async fn test_request_kms_root_key() -> Result<(), Box<dyn std::error::Error>> {
     // Extract CKD response from the result
     // The mock MPC contract returns PromiseOrValue::Value synchronously
     let ckd_response: serde_json::Value = result.json()?;
-    println!("CKD Response received: {:#}", ckd_response);
 
     // Extract big_y and big_c from the response
     let big_y_str = ckd_response["big_y"]
@@ -145,8 +144,8 @@ async fn test_request_kms_root_key() -> Result<(), Box<dyn std::error::Error>> {
         .as_str()
         .ok_or_else(|| -> Box<dyn std::error::Error> { "big_c not found in response".into() })?;
 
-    println!("big_y: {}", big_y_str);
-    println!("big_c: {}", big_c_str);
+    println!("big_y: {big_y_str}");
+    println!("big_c: {big_c_str}");
 
     // Derive keys from the CKD response
     // Note: In a real scenario, we would need:
