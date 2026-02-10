@@ -16,7 +16,6 @@ near deploy $APP_CONTRACT ../../target/near/near_dstack_app/near_dstack_app.wasm
     "initial_device_id": null,
     "initial_compose_hash": null,
     "kms_contract_id": "'$KMS_CONTRACT_ID'"
-  }' \
-  --accountId $OWNER_ACCOUNT
+  }'
 
 echo "App contract deployed at: $APP_CONTRACT"
