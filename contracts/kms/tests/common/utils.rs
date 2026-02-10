@@ -625,25 +625,27 @@ pub fn derive_key_from_ckd_response(
     // Remove "bls12381g1:" prefix if present
     let big_y_hex = big_y_str.strip_prefix("bls12381g1:").unwrap_or(big_y_str);
     let big_c_hex = big_c_str.strip_prefix("bls12381g1:").unwrap_or(big_c_str);
-    
+
     let big_y_bytes = hex::decode(big_y_hex)?;
     let big_c_bytes = hex::decode(big_c_hex)?;
-    
+
     // For testing purposes, we'll derive a key from the concatenated response
     // In production, you would:
     // 1. Decrypt: secret = big_c - big_y * ephemeral_private_key
     // 2. Verify the secret using MPC public key and app_id
     // 3. Derive strong key using HKDF: HKDF(secret, info="")
-    
+
     // Simplified derivation for testing: use HKDF on concatenated big_y and big_c
-    use sha2::{Sha256, Digest};
     use hkdf::Hkdf;
-    
+    use sha2::{Digest, Sha256};
+
     let ikm: Vec<u8> = [big_y_bytes, big_c_bytes].concat();
     let hk = Hkdf::<Sha256>::new(None, &ikm);
     let mut okm = [0u8; 32];
     hk.expand(b"", &mut okm)
-        .map_err(|e| -> Box<dyn std::error::Error> { format!("HKDF expansion failed: {}", e).into() })?;
-    
+        .map_err(|e| -> Box<dyn std::error::Error> {
+            format!("HKDF expansion failed: {}", e).into()
+        })?;
+
     Ok(okm)
 }
