@@ -60,6 +60,8 @@ tracing = "0.1"
 getrandom = { version = "0.2.16", features = ["custom"] }
 
 [dev-dependencies]
+bs58 = "0.5"
+hkdf = "0.12"
 near-gas = "0.3.3"
 near-sdk = { version = "5.24.0", features = ["unit-testing"] }
 near-workspaces = { version = "0.22.1", features = ["unstable"] }

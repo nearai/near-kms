@@ -609,3 +609,73 @@ pub async fn disable_app_upgrades(
 
     Ok(result)
 }
+
+// ============================================================================
+// Key Format Helper Functions
+// ============================================================================
+
+/// Convert a hex string (48 bytes = 96 hex chars) to BLS12-381 G1 public key format
+/// Format: bls12381g1:<`base58_encoded_key`>
+pub fn hex_to_bls12381g1_key(hex_str: &str) -> Result<String, Box<dyn std::error::Error>> {
+    use bs58;
+
+    // Convert hex to bytes
+    let key_bytes: Vec<u8> = (0..hex_str.len())
+        .step_by(2)
+        .map(|i| {
+            u8::from_str_radix(&hex_str[i..i + 2], 16)
+                .map_err(|e| -> Box<dyn std::error::Error> { format!("Invalid hex: {e}").into() })
+        })
+        .collect::<Result<Vec<u8>, _>>()?;
+
+    // Ensure it's exactly 48 bytes
+    if key_bytes.len() != 48 {
+        return Err(format!("Key must be 48 bytes, got {}", key_bytes.len()).into());
+    }
+
+    // Encode to base58
+    let base58_key = bs58::encode(&key_bytes).into_string();
+
+    // Add prefix
+    Ok(format!("bls12381g1:{base58_key}"))
+}
+
+// ============================================================================
+// Key Derivation Helper Functions
+// ============================================================================
+
+/// Derive key from CKD response
+/// This is a simplified version for testing - in production, you would need
+/// the ephemeral private key and MPC public key for full decryption and verification
+pub fn derive_key_from_ckd_response(
+    big_y_str: &str,
+    big_c_str: &str,
+) -> Result<[u8; 32], Box<dyn std::error::Error>> {
+    use hkdf::Hkdf;
+    use sha2::Sha256;
+
+    // Parse hex strings to bytes
+    // Remove "bls12381g1:" prefix if present
+    let big_y_hex = big_y_str.strip_prefix("bls12381g1:").unwrap_or(big_y_str);
+    let big_c_hex = big_c_str.strip_prefix("bls12381g1:").unwrap_or(big_c_str);
+
+    let big_y_bytes = hex::decode(big_y_hex)?;
+    let big_c_bytes = hex::decode(big_c_hex)?;
+
+    // For testing purposes, we'll derive a key from the concatenated response
+    // In production, you would:
+    // 1. Decrypt: secret = big_c - big_y * ephemeral_private_key
+    // 2. Verify the secret using MPC public key and app_id
+    // 3. Derive strong key using HKDF: HKDF(secret, info="")
+
+    // Simplified derivation for testing: use HKDF on concatenated big_y and big_c
+    let ikm: Vec<u8> = [big_y_bytes, big_c_bytes].concat();
+    let hk = Hkdf::<Sha256>::new(None, &ikm);
+    let mut okm = [0u8; 32];
+    hk.expand(b"", &mut okm)
+        .map_err(|e| -> Box<dyn std::error::Error> {
+            format!("HKDF expansion failed: {e}").into()
+        })?;
+
+    Ok(okm)
+}

@@ -4,7 +4,7 @@ mod common;
 use common::constants::*;
 use common::utils::*;
 use near_sdk::NearToken;
-use near_sdk::serde_json::json;
+use near_sdk::serde_json::{self, json};
 
 #[tokio::test]
 async fn test_kms_contract_initialization() -> Result<(), Box<dyn std::error::Error>> {
@@ -111,14 +111,15 @@ async fn test_request_kms_root_key() -> Result<(), Box<dyn std::error::Error>> {
 
     // Request root key with mock MPC contract using Alice's account
     // The mock MPC contract will return a response via callback
-    let worker_public_key = "a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef123456";
+    // BLS12-381 G1 public key must be in format: bls12381g1:<base58_encoded_48_bytes>
+    let worker_public_key = common::utils::hex_to_bls12381g1_key(WORKER_PUBLIC_KEY_HEX)?;
     let result = request_kms_root_key(
         &alice,
         &kms_contract,
         QUOTE_HEX_ALICE,
         QUOTE_COLLATERAL_ALICE,
         TCB_INFO_ALICE,
-        worker_public_key,
+        &worker_public_key,
     )
     .await?;
 
@@ -132,30 +133,29 @@ async fn test_request_kms_root_key() -> Result<(), Box<dyn std::error::Error>> {
         result.into_result().unwrap_err()
     );
 
-    // Verify KMS info was set (the callback should have stored the keys)
-    let kms_info = get_kms_info(&kms_contract).await?;
+    // Extract CKD response from the result
+    // The mock MPC contract returns PromiseOrValue::Value synchronously
+    let ckd_response: serde_json::Value = result.json()?;
 
-    if let Some(info) = kms_info {
-        // Verify the key format - k256_pubkey should be a byte array
-        if let Some(k256_pubkey) = info.get("k256_pubkey") {
-            if let Some(pubkey_bytes) = k256_pubkey.as_array() {
-                assert!(!pubkey_bytes.is_empty(), "k256_pubkey should not be empty");
-                println!("k256_pubkey length: {}", pubkey_bytes.len());
-            }
-        }
+    // Extract big_y and big_c from the response
+    let big_y_str = ckd_response["big_y"]
+        .as_str()
+        .ok_or_else(|| -> Box<dyn std::error::Error> { "big_y not found in response".into() })?;
+    let big_c_str = ckd_response["big_c"]
+        .as_str()
+        .ok_or_else(|| -> Box<dyn std::error::Error> { "big_c not found in response".into() })?;
 
-        // Verify ca_pubkey format
-        if let Some(ca_pubkey) = info.get("ca_pubkey") {
-            if let Some(pubkey_bytes) = ca_pubkey.as_array() {
-                assert!(!pubkey_bytes.is_empty(), "ca_pubkey should not be empty");
-                println!("ca_pubkey length: {}", pubkey_bytes.len());
-            }
-        }
+    println!("big_y: {big_y_str}");
+    println!("big_c: {big_c_str}");
 
-        println!("KMS info structure is valid");
-    } else {
-        println!("KMS info not set yet (callback may not have completed)");
-    }
+    // Derive keys from the CKD response
+    // Note: In a real scenario, we would need:
+    // 1. Ephemeral private key (generated before calling request_kms_root_key)
+    // 2. MPC public key (for verification)
+    // 3. App ID (derived from account_id and derivation_path)
+    // For this test, we'll demonstrate the key derivation structure
+    let derived_key = derive_key_from_ckd_response(big_y_str, big_c_str)?;
+    println!("Derived key (hex): {}", hex::encode(derived_key));
 
     println!("Test passed: Root key request processed successfully");
 
