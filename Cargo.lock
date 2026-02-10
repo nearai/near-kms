@@ -2123,6 +2123,7 @@ name = "near-dstack-kms"
 version = "0.1.0"
 dependencies = [
  "borsh",
+ "bs58 0.5.1",
  "dcap-qvl",
  "derive_more 2.1.1",
  "dstack-sdk-types",

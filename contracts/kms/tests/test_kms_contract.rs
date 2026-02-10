@@ -111,7 +111,8 @@ async fn test_request_kms_root_key() -> Result<(), Box<dyn std::error::Error>> {
 
     // Request root key with mock MPC contract using Alice's account
     // The mock MPC contract will return a response via callback
-    let worker_public_key = "a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef123456";
+    // BLS12-381 G1 public key must be in format: bls12381g1:<base58_encoded_48_bytes>
+    let worker_public_key = common::utils::hex_to_bls12381g1_key(WORKER_PUBLIC_KEY_HEX)?;
     let result = request_kms_root_key(
         &alice,
         &kms_contract,
@@ -255,4 +256,19 @@ async fn test_non_owner_cannot_add_compose_hash() -> Result<(), Box<dyn std::err
     println!("Test passed: Non-owner correctly prevented from adding compose hash");
 
     Ok(())
+}
+
+#[test]
+fn test_worker_public_key_conversion() {
+    // Test that the hex key converts correctly to bls12381g1 format
+    let converted = common::utils::hex_to_bls12381g1_key(WORKER_PUBLIC_KEY_HEX).unwrap();
+    println!("\n========================================");
+    println!("Converted worker public key:");
+    println!("{}", converted);
+    println!("========================================\n");
+    assert!(converted.starts_with("bls12381g1:"));
+    // The base58 part should be around 66 characters for 48 bytes (like example: 6KtVVcAAGacrjNGePN8bp3KV6fYGrw1rFsyc7cVJCqR16Zc2ZFg3HX3hSZxSfv1oH6)
+    let base58_part = converted.strip_prefix("bls12381g1:").unwrap();
+    println!("Base58 part length: {} characters", base58_part.len());
+    assert!(base58_part.len() >= 64 && base58_part.len() <= 67, "Base58 encoded 48 bytes should be ~66 chars, got {}", base58_part.len());
 }

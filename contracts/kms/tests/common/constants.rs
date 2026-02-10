@@ -1,5 +1,10 @@
 pub const COMPOSE_HASH: &str = "f68cf65a75ad980289144ef3c096a007fc4583ea6d1f90589757f229dbc6cdab";
 
+// Worker public key for testing (BLS12-381 G1)
+// Hex format: a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef123456
+// Converted to bls12381g1 format using hex_to_bls12381g1_key helper
+pub const WORKER_PUBLIC_KEY_HEX: &str = "a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef123456";
+
 // Worker Info: Alice
 pub const SECRET_KEY_ALICE: &str = "ed25519:3uHrtHQ6422oAj7WhvDgf9KdewGZLvCLbY6AyDdfkctRkUgyai1yMFn7TGnY2a4zQ8o2a1xQpaPPuaTcjRNaxTqP";
 pub const CHECKSUM_ALICE: &str = "98836e3169efb65d42411b7fc1aa1ba4e0e3713aa97c53cbb5d10444d27788c7";

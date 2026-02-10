@@ -611,6 +611,36 @@ pub async fn disable_app_upgrades(
 }
 
 // ============================================================================
+// Key Format Helper Functions
+// ============================================================================
+
+/// Convert a hex string (48 bytes = 96 hex chars) to BLS12-381 G1 public key format
+/// Format: bls12381g1:<base58_encoded_key>
+pub fn hex_to_bls12381g1_key(hex_str: &str) -> Result<String, Box<dyn std::error::Error>> {
+    use bs58;
+    
+    // Convert hex to bytes
+    let key_bytes: Vec<u8> = (0..hex_str.len())
+        .step_by(2)
+        .map(|i| {
+            u8::from_str_radix(&hex_str[i..i + 2], 16)
+                .map_err(|e| -> Box<dyn std::error::Error> { format!("Invalid hex: {e}").into() })
+        })
+        .collect::<Result<Vec<u8>, _>>()?;
+    
+    // Ensure it's exactly 48 bytes
+    if key_bytes.len() != 48 {
+        return Err(format!("Key must be 48 bytes, got {}", key_bytes.len()).into());
+    }
+    
+    // Encode to base58
+    let base58_key = bs58::encode(&key_bytes).into_string();
+    
+    // Add prefix
+    Ok(format!("bls12381g1:{}", base58_key))
+}
+
+// ============================================================================
 // Key Derivation Helper Functions
 // ============================================================================
 
