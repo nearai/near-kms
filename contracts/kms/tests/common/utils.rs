@@ -621,6 +621,9 @@ pub fn derive_key_from_ckd_response(
     big_y_str: &str,
     big_c_str: &str,
 ) -> Result<[u8; 32], Box<dyn std::error::Error>> {
+    use hkdf::Hkdf;
+    use sha2::Sha256;
+
     // Parse hex strings to bytes
     // Remove "bls12381g1:" prefix if present
     let big_y_hex = big_y_str.strip_prefix("bls12381g1:").unwrap_or(big_y_str);
@@ -636,15 +639,12 @@ pub fn derive_key_from_ckd_response(
     // 3. Derive strong key using HKDF: HKDF(secret, info="")
 
     // Simplified derivation for testing: use HKDF on concatenated big_y and big_c
-    use hkdf::Hkdf;
-    use sha2::{Digest, Sha256};
-
     let ikm: Vec<u8> = [big_y_bytes, big_c_bytes].concat();
     let hk = Hkdf::<Sha256>::new(None, &ikm);
     let mut okm = [0u8; 32];
     hk.expand(b"", &mut okm)
         .map_err(|e| -> Box<dyn std::error::Error> {
-            format!("HKDF expansion failed: {}", e).into()
+            format!("HKDF expansion failed: {e}").into()
         })?;
 
     Ok(okm)
