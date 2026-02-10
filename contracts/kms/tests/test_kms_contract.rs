@@ -119,7 +119,7 @@ async fn test_request_kms_root_key() -> Result<(), Box<dyn std::error::Error>> {
         QUOTE_HEX_ALICE,
         QUOTE_COLLATERAL_ALICE,
         TCB_INFO_ALICE,
-        worker_public_key,
+        &worker_public_key,
     )
     .await?;
 
@@ -270,5 +270,9 @@ fn test_worker_public_key_conversion() {
     // The base58 part should be around 66 characters for 48 bytes (like example: 6KtVVcAAGacrjNGePN8bp3KV6fYGrw1rFsyc7cVJCqR16Zc2ZFg3HX3hSZxSfv1oH6)
     let base58_part = converted.strip_prefix("bls12381g1:").unwrap();
     println!("Base58 part length: {} characters", base58_part.len());
-    assert!(base58_part.len() >= 64 && base58_part.len() <= 67, "Base58 encoded 48 bytes should be ~66 chars, got {}", base58_part.len());
+    assert!(
+        base58_part.len() >= 64 && base58_part.len() <= 67,
+        "Base58 encoded 48 bytes should be ~66 chars, got {}",
+        base58_part.len()
+    );
 }
