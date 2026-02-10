@@ -5,7 +5,7 @@ export NEAR_ENV=mainnet
 export KMS_CONTRACT=kms.near
 export OWNER_ACCOUNT=owner.near
 export MPC_CONTRACT_ID=v1.signer
-export MPC_DOMAIN_ID=0
+export MPC_DOMAIN_ID=2
 
 # Deploy KMS contract
 near deploy $KMS_CONTRACT ../../target/near/near_dstack_kms/near_dstack_kms.wasm \
