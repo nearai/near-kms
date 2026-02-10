@@ -19,6 +19,6 @@ near call $KMS_CONTRACT register_app '{
   "allow_any_device": false,
   "initial_device_id": null,
   "initial_compose_hash": null
-}' --accountId $OWNER_ACCOUNT --deposit $DEPOSIT_AMOUNT
+}' --accountId $OWNER_ACCOUNT --deposit $DEPOSIT_AMOUNT --gas 300000000000000
 
 echo "App registration initiated. App will be deployed at: ${APP_ID}.${KMS_CONTRACT}"
