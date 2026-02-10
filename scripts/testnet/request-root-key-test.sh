@@ -71,6 +71,9 @@ ARGS_JSON=$(jq -n \
   }')
 
 # Request root key from MPC
-near call $KMS_CONTRACT request_kms_root_key "$ARGS_JSON" --accountId $ACCOUNT --depositYocto 1
+near call $KMS_CONTRACT request_kms_root_key "$ARGS_JSON" \
+  --gas 300000000000000 \
+  --accountId $ACCOUNT \
+  --depositYocto 1
 
 echo "Root key request submitted to KMS contract: $KMS_CONTRACT"
