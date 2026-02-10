@@ -21,7 +21,10 @@ fi
 export QUOTE_HEX=$(cat "$QUOTE_HEX_FILE" | tr -d '\n')
 
 # Worker public key from test (BLS12-381 G1 public key)
-export WORKER_PUBLIC_KEY="a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef123456"
+# Format: bls12381g1:<base58_encoded_48_bytes>
+# Hex key: a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef123456 (48 bytes)
+# The base58-encoded value should be 66 characters (like the example: 6KtVVcAAGacrjNGePN8bp3KV6fYGrw1rFsyc7cVJCqR16Zc2ZFg3HX3hSZxSfv1oH6)
+export WORKER_PUBLIC_KEY="bls12381g1:6w2Z44ej2bRCscgc15KexFTB67JhMsDcknYeizDRhgyvpeXXVZZUiBPEZjoAAbANzH"
 
 # Read collateral and tcb_info from JSON files
 COLLATERAL_FILE="$PROJECT_ROOT/contracts/kms/tests/samples/alice/quote_collateral.json"
